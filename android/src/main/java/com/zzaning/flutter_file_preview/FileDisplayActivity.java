@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -36,6 +38,7 @@ public class FileDisplayActivity extends AppCompatActivity {
     private TBSWebView x5WebView;
     private RelativeLayout rlRoot;
     private String url;
+    private String urlBase;
     private TbsReaderView tbsReaderView;
 
     public static void show(Context context, String url, boolean isOpenFile, String title) {
@@ -80,8 +83,15 @@ public class FileDisplayActivity extends AppCompatActivity {
     }
 
     private void downLoadFromNet(final String url) {
+        urlBase = url;
+        try {
+            URI urlObj = new URI(url);
+            urlBase = urlObj.getScheme() + "://"+ urlObj.getHost() +urlObj.getPath();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
         //1.网络下载、存储路径、
-        File cacheFile = getCacheFile(url);
+        File cacheFile = getCacheFile(urlBase);
         if (cacheFile.exists()) {
             if (cacheFile.length() <= 0) {
                 Log.d(TAG, "删除空文件！！");
@@ -94,6 +104,7 @@ public class FileDisplayActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 Log.d(TAG, "下载文件-->onResponse");
+
                 boolean flag;
                 InputStream is = null;
                 byte[] buf = new byte[2048];
@@ -104,14 +115,14 @@ public class FileDisplayActivity extends AppCompatActivity {
                     is = responseBody.byteStream();
                     long total = responseBody.contentLength();
 
-                    File file1 = getCacheDir(url);
+                    File file1 = getCacheDir(urlBase);
                     if (!file1.exists()) {
                         file1.mkdirs();
                         Log.d(TAG, "创建缓存目录： " + file1.toString());
                     }
 
                     //fileN : /storage/emulated/0/pdf/kauibao20170821040512.pdf
-                    File fileN = getCacheFile(url); //new File(getCacheDir(url), getFileName(url))
+                    File fileN = getCacheFile(urlBase); //new File(getCacheDir(url), getFileName(url))
 
                     Log.d(TAG, "创建缓存文件： " + fileN.toString());
                     if (!fileN.exists()) {
